@@ -45,7 +45,7 @@ def ParaconsistentAnalysis(number_of_classes, \
     number_of_feature_vectors_in_class, dimension_of_each_feature_vector, c):
 
     '''
-    Example of usage: (IMPORTANT: array c MUST BE FLATTENED)
+    Example of usage: (IMPORTANT: array c MUST BE FLATTENED OR RESHAPED TO (1, -1))
     
     number_of_classes=3
     number_of_feature_vectors_in_class = [0] * number_of_classes #syntax for list init
