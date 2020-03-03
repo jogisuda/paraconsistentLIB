@@ -42,7 +42,7 @@ def mean_similarities(v, n, t):
 
 
 def ParaconsistentAnalysis(number_of_classes, \
-    number_of_feature_vectors_in_class, dimension_of_each_feature_vector, c):
+    number_of_feature_vectors_in_class, dimension_of_each_feature_vector, c, verbose = False):
 
     '''
     Example of usage: (IMPORTANT: array c MUST BE FLATTENED OR RESHAPED TO (1, -1))
@@ -154,11 +154,16 @@ def ParaconsistentAnalysis(number_of_classes, \
     					F += 1
     
     
+    
+    
+    
     beta=((float)(R))/((float)(F)) #np.float(64) ? Maior prec
-    print("\nBETA: %.3f",beta)
-    print("\nP=(G1,G2)=(%.3f,%.3f)",alpha-beta,alpha+beta-1)
-    print("\nDistance from P to (1,0): %.3f",np.sqrt(pow((alpha-beta)-1,2)+pow(alpha+beta-1,2)))
-    print("\n\n")
+    if verbose == True:  
+        print("ALPHA: {.3f}".format(alpha))
+        print("BETA: {.3f}".format(beta))
+        print("P=(G1,G2)=({.3f},{.3f})".format(alpha-beta,alpha+beta-1))
+        print("Distance from P to (1,0): {.3f}".format(np.sqrt(pow((alpha-beta)-1,2)+pow(alpha+beta-1,2)))  )
+        print("############")
     return np.sqrt(pow((alpha-beta)-1,2)+pow(alpha+beta-1,2)) 
 
 ######################/
@@ -170,7 +175,7 @@ def ParaconsistentAnalysis(number_of_classes, \
 
 
 def BestParaconsistent(number_of_classes, number_of_feature_vectors_in_class,\
-dimension_of_each_feature_vector, c):
+dimension_of_each_feature_vector, c, verbose = False):
 
     featuresIndex = [Y for Y in range(dimension_of_each_feature_vector)] #representa o índice
     #de cada característica no vetor de carac.
@@ -188,7 +193,7 @@ dimension_of_each_feature_vector, c):
                 for j in range(len(c)):
                     if j % dimension_of_each_feature_vector == i:
                         newC.append(c[j])
-                dist = ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, 1, newC)
+                dist = ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, 1, newC, verbose)
                 if dist < bestDist:
                     bestDist = dist
                     if len(bestIndex) == 0:
@@ -203,7 +208,7 @@ dimension_of_each_feature_vector, c):
                     for j in range(len(c)):
                         if (j % dimension_of_each_feature_vector) in bestIndex:
                             newC.append(c[j])
-                    dist = ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, len(bestIndex), newC)
+                    dist = ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, len(bestIndex), newC, verbose)
                     bestIndex.remove(i) #retira o ultimo elemento colocado
                     if dist < bestDist and old == bestIndex:
                         bestDist = dist
