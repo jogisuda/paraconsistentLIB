@@ -177,7 +177,7 @@ dimension_of_each_feature_vector, c):
     bestIndex = [] #as melhores carac. selecionadas
     bestDist = 2 # melhor distancia correspondente ao conjunto dos
     # melhores índices começa em mais infinito.
-    for a in range( (dimension_of_each_feature_vector * (dimension_of_each_feature_vector + 1) ) // 2 ):
+    for a in range(dimension_of_each_feature_vector):
         old = copy.deepcopy(bestIndex)
         for i in featuresIndex:
             if len(bestIndex) == 0 or a == 0: #se lista ainda vazia, ou ainda é a primeira passada
