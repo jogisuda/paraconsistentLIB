@@ -1,6 +1,6 @@
 # paraconsistentLIB
 
-Esta é uma biblioteca criada para o python 3, com o intuito de trazer uma nova ferramenta de engenharia de características baseada no uso de Lógica Paraconsistente. Para entender melhor esta nova técnica, ler [1].
+Esta é uma biblioteca criada para o python 3, com o intuito de trazer uma nova ferramenta de engenharia de características baseada no uso de Lógica Paraconsistente. Para entender melhor esta nova técnica, veja [1].
 
 Funções disponíveis:
     -ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, dimension_of_each_feature_vector, c): retorna a distância do conjunto providenciado (vetor) de características ao ponto (1, 0) no plano Paraconsistente. Se verbose = True, a função imprimirá valores de alpha e beta também.
