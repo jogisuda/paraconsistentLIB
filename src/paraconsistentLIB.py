@@ -1,8 +1,9 @@
 """
 This is the python version for using the Paraconsistent Analysis.
-For a feature vector of length n, the function ParaconsistentAnalysis()
+For a feature vector of length n, the function BestParaconsistent()
 calculates every possible combination of features from n, and then returns
-the best possible vector, that is, the set of features closest to P(1,0) in the Paraconsistent plane.
+the best set of features (that is, the set of features closest to P(1,0) in the Paraconsistent plane) and
+also the distance of the set to P(1,0).
 
 For more info, see the article from Guido, R.C; "Paraconsistent feature engineering", 
 IEEE Signal Process Mag., vol. 36, no. 1, pp. 154-158, 2019
@@ -45,7 +46,7 @@ def ParaconsistentAnalysis(number_of_classes, \
     number_of_feature_vectors_in_class, dimension_of_each_feature_vector, c, verbose = False):
 
     '''
-    Example of usage: (IMPORTANT: array c MUST BE FLATTENED OR RESHAPED TO (1, -1))
+    Example of usage:
     
     number_of_classes=3
     number_of_feature_vectors_in_class = [0] * number_of_classes #syntax for list init
@@ -64,7 +65,6 @@ def ParaconsistentAnalysis(number_of_classes, \
     0.90,0.12,0.88,0.14,0.88,0.13,0.89,0.11, \
     0.55,0.53,0.53,0.55,0.54,0.54,0.56,0.54, \
     0.10,0.88,0.11,0.86,0.12,0.87,0.11,0.88]
-    
     '''
     #all vectors in class C_1, by all vectors in C_2, ...., by all in C_n
     
@@ -154,17 +154,16 @@ def ParaconsistentAnalysis(number_of_classes, \
     					F += 1
     
     
-    
-    
-    
     beta=((float)(R))/((float)(F)) #np.float(64) ? Maior prec
+    
+    dist = np.sqrt(pow((alpha-beta)-1,2)+pow(alpha+beta-1,2))
     if verbose == True:  
-        print("ALPHA: {.3f}".format(alpha))
-        print("BETA: {.3f}".format(beta))
-        print("P=(G1,G2)=({.3f},{.3f})".format(alpha-beta,alpha+beta-1))
-        print("Distance from P to (1,0): {.3f}".format(np.sqrt(pow((alpha-beta)-1,2)+pow(alpha+beta-1,2)))  )
-        print("############")
-    return np.sqrt(pow((alpha-beta)-1,2)+pow(alpha+beta-1,2)) 
+        print("BETA: %.3f",beta)
+        print("P=(G1,G2)=(%.3f,%.3f)",alpha-beta,alpha+beta-1)
+        print("Distance from P to (1,0): %.3f",dist)
+        print("\n")
+    #print("Dimensao: ", dimension_of_each_feature_vector, " -> ", dist)
+    return dist 
 
 ######################/
 ######################
@@ -178,12 +177,14 @@ def BestParaconsistent(number_of_classes, number_of_feature_vectors_in_class,\
 dimension_of_each_feature_vector, c, verbose = False):
 
     featuresIndex = [Y for Y in range(dimension_of_each_feature_vector)] #representa o índice
+    distITERANTERIOR = 3
     #de cada característica no vetor de carac.
     bestIndex = [] #as melhores carac. selecionadas
     bestDist = 2 # melhor distancia correspondente ao conjunto dos
     # melhores índices começa em mais infinito.
-    for a in range(dimension_of_each_feature_vector):
+    for a in range( dimension_of_each_feature_vector ):
         old = copy.deepcopy(bestIndex)
+        tmp = []
         for i in featuresIndex:
             if len(bestIndex) == 0 or a == 0: #se lista ainda vazia, ou ainda é a primeira passada
                 #doSomething
@@ -209,18 +210,58 @@ dimension_of_each_feature_vector, c, verbose = False):
                         if (j % dimension_of_each_feature_vector) in bestIndex:
                             newC.append(c[j])
                     dist = ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, len(bestIndex), newC, verbose)
+                    
                     bestIndex.remove(i) #retira o ultimo elemento colocado
-                    if dist < bestDist and old == bestIndex:
-                        bestDist = dist
-                        bestIndex.append(i)
-                    elif dist < bestDist and old != bestIndex:
-                        bestDist = dist
-                        bestIndex.pop()
-                        bestIndex.append(i)
+                    if dist < distITERANTERIOR and distITERANTERIOR != 3:
+                        #bestDist = dist
+                        distITERANTERIOR = dist
+                        tmp.pop() #tira o que tinha antes
+                        tmp.append(i) #coloca o melhor atualizado
+                        #bestIndex.pop()
+                        #bestIndex.append(i)
+                    elif dist < distITERANTERIOR and distITERANTERIOR == 3:
+                        #bestDist = dist
+                        #bestIndex.append(i)
+                        distITERANTERIOR = dist
+                        tmp.append(i)
+                    #distITERANTERIOR = dist
+        if distITERANTERIOR < bestDist: #se ativar essa cond. o programa nunca vai adicionar 
+          bestDist = distITERANTERIOR
+          #ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, len(bestIndex), newC, verbose=True)
+        if distITERANTERIOR != 3: #quero dizer que não é mais a primeira passada, então existe algo em tmp!
+          bestIndex.append(tmp[0]) 
+          #tmp representa o melhor da passada que acabou de acontecer entre 0 e len(features)
+        if len(bestIndex) == 3:
+          newC = []
+          for j in range(len(c)):
+            if (j % dimension_of_each_feature_vector) in bestIndex:
+              newC.append(c[j])
+          ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, len(bestIndex), newC, verbose=True)
+        distITERANTERIOR = 3
+        print("Best with {}: BestIndex {{{}}}, Dist: {{{}}}".format(len(bestIndex), bestIndex, min(xAxis[a]) ) )
+        print("---> ", xAxis[a])
         bestIndex.sort()
+        #BestsIndexes.append(copy.deepcopy(bestIndex))
+        #BestsDists.append(bestDist)
 
 
     return bestIndex, bestDist
+
+'''
+BestsIndexes = []
+BestsDists = []
+number_of_classes=2
+number_of_feature_vectors_in_class = [0] * number_of_classes #syntax for list init
+number_of_feature_vectors_in_class[0]=(TRAIN[:, 0] == 0).sum() #saudável
+number_of_feature_vectors_in_class[1]=(TRAIN[:, 0] == 1).sum() #patológico
     
+dimension_of_each_feature_vector=15
 
+X = TRAIN[:, 1:]
+X[:, :] -= np.min(X[:, :], axis=0) #Scaling
+X[:, :] /= np.max(X[:, :], axis=0)
 
+c = X[:, :].flatten()
+'''
+print(BestParaconsistent(number_of_classes, number_of_feature_vectors_in_class,\
+dimension_of_each_feature_vector, c, verbose=False) )
