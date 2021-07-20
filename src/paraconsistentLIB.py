@@ -14,11 +14,7 @@ IEEE Signal Process Mag., vol. 36, no. 1, pp. 154-158, 2019
 import numpy as np
 import copy
 from copy import deepcopy
-
-
-def grouped(iterable, n):
-    "s -> (s0,s1,s2,...sn-1), (sn,sn+1,sn+2,...s2n-1), (s2n,s2n+1,s2n+2,...s3n-1), ..."
-    return zip(*[iter(iterable)]*n)
+from itertools import chain, combinations
 
 
 def mean_similarities(v, n, t):
@@ -173,79 +169,48 @@ def ParaconsistentAnalysis(number_of_classes, \
 
 
 
-def BestParaconsistent(number_of_classes, number_of_feature_vectors_in_class,\
-dimension_of_each_feature_vector, c, verbose = False):
-
-    featuresIndex = [Y for Y in range(dimension_of_each_feature_vector)] #representa o índice
-    distITERANTERIOR = 3
-    #de cada característica no vetor de carac.
-    bestIndex = [] #as melhores carac. selecionadas
-    bestDist = 2 # melhor distancia correspondente ao conjunto dos
-    # melhores índices começa em mais infinito.
-    for a in range( dimension_of_each_feature_vector ):
-        old = copy.deepcopy(bestIndex)
-        tmp = []
-        for i in featuresIndex:
-            if len(bestIndex) == 0 or a == 0: #se lista ainda vazia, ou ainda é a primeira passada
-                #doSomething
-                newC = []
-                number_of_feature_vectors_in_class_AUX = [1] * number_of_classes
-                count = 0
-                for j in range(len(c)):
-                    if j % dimension_of_each_feature_vector == i:
-                        newC.append(c[j])
-                dist = ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, 1, newC, verbose)
-                if dist < bestDist:
-                    bestDist = dist
-                    if len(bestIndex) == 0:
-                        bestIndex.append(i)
-                    else:
-                        bestIndex.pop()
-                        bestIndex.append(i)
-            else:
-                if i not in bestIndex:
-                    bestIndex.append(i) #temporariamente
-                    newC = []
-                    for j in range(len(c)):
-                        if (j % dimension_of_each_feature_vector) in bestIndex:
-                            newC.append(c[j])
-                    dist = ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, len(bestIndex), newC, verbose)
+def powerset(iterable):
+    "list(powerset([1,2,3])) --> [(), (1,), (2,), (3,), (1,2), (1,3), (2,3), (1,2,3)]"
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))
+    
+    
+def best_paraconsistent(number_of_classes, \
+    number_of_feature_vectors_in_class, n_features, dataset, verbose = False):
+        
+    all_combinations = list(powerset(range(n_features)) )
+    best_feature = -1
+    best_distance = np.inf #contem a melhor distancia de cada passada. Inicializada como infinito
+    best_subset = []
+    
+    for i in range(1, n_features+1):
+        for c in all_combinations:
+            #queremos apenas os vetores de tamanho i e que contenham o best_subset até agora!
+            if len(c) == i and all(x in c for x in best_subset): # a elegância: contém o vazio!
+                print("analisando subset {}..".format(c))
+                #seleciona o dataset contendo apenas as melhores features até agora
+                selected_dataset = [dataset[idx + f] for idx in range(0, len(dataset), n_features) for f in c ]
+                dist = ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class,
+                                              len(c), selected_dataset, verbose)
+                print("\t-selected ds: {} -> {}".format(selected_dataset, dist))
+                if dist < best_distance:
+                    best_distance = dist
                     
-                    bestIndex.remove(i) #retira o ultimo elemento colocado
-                    if dist < distITERANTERIOR and distITERANTERIOR != 3:
-                        #bestDist = dist
-                        distITERANTERIOR = dist
-                        tmp.pop() #tira o que tinha antes
-                        tmp.append(i) #coloca o melhor atualizado
-                        #bestIndex.pop()
-                        #bestIndex.append(i)
-                    elif dist < distITERANTERIOR and distITERANTERIOR == 3:
-                        #bestDist = dist
-                        #bestIndex.append(i)
-                        distITERANTERIOR = dist
-                        tmp.append(i)
-                    #distITERANTERIOR = dist
-        if distITERANTERIOR < bestDist: #se ativar essa cond. o programa nunca vai adicionar 
-          bestDist = distITERANTERIOR
-          #ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, len(bestIndex), newC, verbose=True)
-        if distITERANTERIOR != 3: #quero dizer que não é mais a primeira passada, então existe algo em tmp!
-          bestIndex.append(tmp[0]) 
-          #tmp representa o melhor da passada que acabou de acontecer entre 0 e len(features)
-        if len(bestIndex) == 3:
-          newC = []
-          for j in range(len(c)):
-            if (j % dimension_of_each_feature_vector) in bestIndex:
-              newC.append(c[j])
-          ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class, len(bestIndex), newC, verbose=True)
-        distITERANTERIOR = 3
-        print("Best with {}: BestIndex {{{}}}, Dist: {{{}}}".format(len(bestIndex), bestIndex, min(xAxis[a]) ) )
-        print("---> ", xAxis[a])
-        bestIndex.sort()
-        #BestsIndexes.append(copy.deepcopy(bestIndex))
-        #BestsDists.append(bestDist)
+                    #CHECAR A SINTAXE!
+                    best_feature = np.setdiff1d(c, best_subset).tolist()[0] #pega a melhor feature. CHECAR A SINTAXE!
+        if best_feature != -1:
+            best_subset.append(best_feature)
+        else:
+            return best_subset, best_distance
+        #reseta para próxima passada
+        best_feature = -1
+        best_distance = np.inf
+    return best_subset, best_distance
 
 
-    return bestIndex, bestDist
+
+
+
 
 '''
 BestsIndexes = []
