@@ -159,7 +159,7 @@ def ParaconsistentAnalysis(number_of_classes, \
         print("Distance from P to (1,0): %.3f",dist)
         print("\n")
     #print("Dimensao: ", dimension_of_each_feature_vector, " -> ", dist)
-    return dist 
+    return dist , alfa, beta
 
 ######################/
 ######################
@@ -182,17 +182,18 @@ def best_paraconsistent(number_of_classes, \
     best_feature = -1
     best_distance = np.inf #contem a melhor distancia de cada passada. Inicializada como infinito
     best_subset = []
-    
+    best_distances = []
+
     for i in range(1, n_features+1):
         for c in all_combinations:
             #queremos apenas os vetores de tamanho i e que contenham o best_subset até agora!
             if len(c) == i and all(x in c for x in best_subset): # a elegância: contém o vazio!
-                print("analisando subset {}..".format(c))
+                #print("analisando subset {}..".format(c))
                 #seleciona o dataset contendo apenas as melhores features até agora
                 selected_dataset = [dataset[idx + f] for idx in range(0, len(dataset), n_features) for f in c ]
-                dist = ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class,
+                dist, _, _ = ParaconsistentAnalysis(number_of_classes, number_of_feature_vectors_in_class,
                                               len(c), selected_dataset, verbose)
-                print("\t-selected ds: {} -> {}".format(selected_dataset, dist))
+                #print("\t-selected ds: {} -> {}".format(selected_dataset, dist))
                 if dist < best_distance:
                     best_distance = dist
                     
@@ -203,9 +204,11 @@ def best_paraconsistent(number_of_classes, \
         else:
             return best_subset, best_distance
         #reseta para próxima passada
+        best_distances.append(best_distance)
         best_feature = -1
         best_distance = np.inf
-    return best_subset, best_distance
+    
+    return best_subset[:np.argsort(best_distances)[0] + 1], np.min(best_distances)
 
 
 
@@ -227,6 +230,6 @@ X[:, :] -= np.min(X[:, :], axis=0) #Scaling
 X[:, :] /= np.max(X[:, :], axis=0)
 
 c = X[:, :].flatten()
-'''
 print(BestParaconsistent(number_of_classes, number_of_feature_vectors_in_class,\
 dimension_of_each_feature_vector, c, verbose=False) )
+'''
