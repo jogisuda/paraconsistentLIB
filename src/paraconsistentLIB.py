@@ -159,7 +159,7 @@ def ParaconsistentAnalysis(number_of_classes, \
         print("Distance from P to (1,0): %.3f",dist)
         print("\n")
     #print("Dimensao: ", dimension_of_each_feature_vector, " -> ", dist)
-    return dist , alfa, beta
+    return dist , alpha, beta
 
 ######################/
 ######################
